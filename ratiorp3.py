@@ -1,3 +1,18 @@
+'''
+This program calculates r(RP3) according to tab-separated data from "dond_data_with_briefcase.txt"
+and finds individual averages for r.
+
+see Chen and John 2021 (Decision Heuristics and Descriptive Choice Models for Sequential
+High-Stakes Risky Choices in the Deal or No Deal Game).
+In their Ratio-RP3 model, r = banker's offer/(sum of briefcases * proportion of cases greater than banker's offer)
+r is used as a measure for an individual's risk tolerance.
+
+'''
+
+# converts entire sheet into a list of rows,
+# each row being a dictionary,
+# each name being attached to rounds,
+# each round being a list of the variables
 def format(fileName):
     fileIn = open(fileName, "r")
     list = []
@@ -61,19 +76,31 @@ def printRatios(roundRatios):
             print(ratio)
 
 
-def printAvgRatios(roundRatios):
-    for name in roundRatios.keys():
+def getDemogInfo(playerGames): # create dictionaries with player demographic info
+    list = []
+    for player in playerGames.keys():
+        dict = {}
+        dict["Name"] = player
+        for attribute in ["Education", "Gender", "Age"]:
+            dict[attribute] = playerGames[player][0][attribute]
+        list.append(dict)
+    return list
+
+def printAvgRatiosInTxt(roundRatios, demogInfoList):
+    fileWrite = open("avgRatios.txt", "w")
+    print("Name\tAvg Ratio\tEducation\tGender\tAge", file=fileWrite)
+    index = 0
+    for name in roundRatios.keys(): # roundRatios.keys() is a list of names
         sumRatios = 0
         for ratio in roundRatios[name]:
             sumRatios += ratio
-        print(name, sumRatios/(len(roundRatios[name])))
-
+        # print all data about them + roundRatios
+        print(name + "\t" + str(sumRatios/(len(roundRatios[name]))) + "\t" + demogInfoList[index]["Education"] + "\t" + demogInfoList[index]["Gender"] + "\t" + demogInfoList[index]["Age"], file=fileWrite)
+        index += 1
 
 def main():
     playerGames = groupByPlayer(format("dond_data_with_briefcases.txt")) # dictionary with key=player, value=list of dictionaries of rows, each row representing 1 round
-    printAvgRatios(calcRatios(playerGames))
-    # to paste into excel sheet:
-    printRatios(calcRatios(playerGames))
-
+    print(playerGames)
+    printAvgRatiosInTxt(calcRatios(playerGames), getDemogInfo(playerGames))
 
 main()
