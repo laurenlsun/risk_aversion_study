@@ -43,12 +43,13 @@ def groupByPlayer(data):
     return dictPlayers
 
 
-def calcRatios(playerGames):
+def calcRatios(playerGames): # creates roundRatios
     names = playerGames.keys()
     ratiosDict = {}
     for name in names:
         ratiosList = []
         roundList = playerGames[name]
+        # len(playerGames[name]) <- number of rounds played
         for round in roundList:
             prizesLeft = [] # list containing prizes still in play
             winningPrizesLeft = [] # list containing prizes with more money than the bank offer (called "large outcomes") in the paper
@@ -67,7 +68,7 @@ def calcRatios(playerGames):
             ratio = bankOffer / (sum * (len(winningPrizesLeft) / len(prizesLeft)))
             ratiosList.append(ratio)
         ratiosDict[name] = ratiosList
-    return ratiosDict
+    return ratiosDict #roundRatios
 
 
 def printRatios(roundRatios):
@@ -81,21 +82,33 @@ def getDemogInfo(playerGames): # create dictionaries with player demographic inf
     for player in playerGames.keys():
         dict = {}
         dict["Name"] = player
-        for attribute in ["Education", "Gender", "Age"]:
-            dict[attribute] = playerGames[player][0][attribute]
+        for attribute in ["Amount Won", "Deal / No Deal", "Education", "Gender", "Age"]:
+            dict[attribute] = playerGames[player][len(playerGames[player])-1][attribute]
         list.append(dict)
     return list
 
 def printAvgRatiosInTxt(roundRatios, demogInfoList):
-    fileWrite = open("avgRatios.txt", "w")
-    print("Name\tAvg Ratio\tEducation\tGender\tAge", file=fileWrite)
+    fileWrite = open("ratioData.txt", "w")
+    # print(roundRatios)
+    print("Name\tAvg Ratio\tMax Ratio\tFinal Ratio\tConsistent(Final Ratio = Max Ratio)\tAmount Won\tRounds Played\tDeal / No Deal\tEducation\tGender\tAge", file=fileWrite)
     index = 0
     for name in roundRatios.keys(): # roundRatios.keys() is a list of names
-        sumRatios = 0
-        for ratio in roundRatios[name]:
+        # do this for every player:
+        sumRatios = 0 # keep track of sum to find average later
+        maxRatio = 0 # highest attained ratio
+        # print(name + "'s ratios:")
+        for ratio in roundRatios[name]: # looping through the ratios of each round of one player
+            # print(ratio)
+            if ratio > maxRatio: # if this is the biggest ratio seen yet
+                maxRatio = ratio # set it as the new maxRatio
             sumRatios += ratio
+            finalRatio = ratio
+        if finalRatio == maxRatio:
+            consistent = True
+        else:
+            consistent = False
         # print all data about them + roundRatios
-        print(name + "\t" + str(sumRatios/(len(roundRatios[name]))) + "\t" + demogInfoList[index]["Education"] + "\t" + demogInfoList[index]["Gender"] + "\t" + demogInfoList[index]["Age"], file=fileWrite)
+        print(name + "\t" + str(sumRatios/(len(roundRatios[name]))) + "\t" + str(maxRatio) + "\t" + str(finalRatio) + "\t" + str(consistent) + "\t" + demogInfoList[index]["Amount Won"] + "\t" + str(len(roundRatios[name])) + "\t" + demogInfoList[index]["Deal / No Deal"] + "\t" + demogInfoList[index]["Education"] + "\t" + demogInfoList[index]["Gender"] + "\t" + demogInfoList[index]["Age"], file=fileWrite)
         index += 1
 
 def main():
